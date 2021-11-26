@@ -10,8 +10,17 @@ import os
 resource = Resource(attributes={
     "service.name": os.getenv('OTEL_SERVICE_NAME')
 })
+
+# The preferred tracer implementation must be set, as the opentelemetry-api
+# defines the interface with a no-op implementation.
 trace.set_tracer_provider(TracerProvider(resource=resource))
+
+# We tell OpenTelemetry who it is that is creating spans. In this case, we have
+# no real name (no setup.py), so we make one up. If we had a version, we would
+# also specify it here.
 tracer = trace.get_tracer("ww-python-manual", "1.0.0")
+
+# SpanExporter receives the spans and send them to the target location.
 otlp_exporter = OTLPSpanExporter(endpoint=os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT'), insecure=True)
 span_processor = BatchSpanProcessor(otlp_exporter)
 trace.get_tracer_provider().add_span_processor(span_processor)
